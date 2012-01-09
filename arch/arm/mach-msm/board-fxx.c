@@ -1059,7 +1059,11 @@ static struct i2c_board_info i2c_devices[] = {
 #endif
 #ifdef CONFIG_OV5642AF
 	{
+#ifdef CONFIG_MUCHTEL_A1
+		I2C_BOARD_INFO("ov5642af", 0x3C),
+#else
 		I2C_BOARD_INFO("ov5642af", 0xFD),
+#endif
 	},
 #endif
 #ifdef CONFIG_OV5642
@@ -1966,6 +1970,15 @@ static void __init init_headset_sensor(void)
 static ssize_t fxx_virtual_keys_show(struct kobject *kobj,
 		struct kobj_attribute *attr, char *buf)
 {
+#ifdef CONFIG_MUCHTEL_A1
+	/* Muchtel-A1 */
+	return sprintf(buf,
+			__stringify(EV_KEY) ":" __stringify(KEY_SEND)  ":48:525:60:60"
+			":" __stringify(EV_KEY) ":" __stringify(KEY_MENU)   ":137:525:60:60"
+			":" __stringify(EV_KEY) ":" __stringify(KEY_BACK)   ":228:525:60:60"
+			":" __stringify(EV_KEY) ":" __stringify(KEY_END) ":280:525:60:60"
+			"\n");
+#else
 	/* center: x: home: 55, menu: 185, back: 305, search 425, y: 835 */
 	return sprintf(buf,
 			__stringify(EV_KEY) ":" __stringify(KEY_MENU)  ":48:525:60:60"
@@ -1973,6 +1986,7 @@ static ssize_t fxx_virtual_keys_show(struct kobject *kobj,
 			":" __stringify(EV_KEY) ":" __stringify(KEY_SEARCH)   ":228:525:60:60"
 			":" __stringify(EV_KEY) ":" __stringify(KEY_BACK) ":280:525:60:60"
 			"\n");
+#endif
 }
 
 static struct kobj_attribute fxx_virtual_keys_attr = {

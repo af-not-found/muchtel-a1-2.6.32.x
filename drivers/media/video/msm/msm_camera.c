@@ -1544,8 +1544,14 @@ static int msm_get_sensor_info(struct msm_sync *sync, void __user *arg)
 	memcpy(&info.name[0],
 		sdata->sensor_name,
 		MAX_SENSOR_NAME);
+
+#ifdef CONFIG_MUCHTEL_A1
+	// Muchtel-A1 has flash, but sdata->flash_data is null.
+	info.flash_enabled = 1;
+#else
 	info.flash_enabled = sdata->flash_data->flash_type !=
 		MSM_CAMERA_FLASH_NONE;
+#endif
 
 	/* copy back to user space */
 	if (copy_to_user((void *)arg,
