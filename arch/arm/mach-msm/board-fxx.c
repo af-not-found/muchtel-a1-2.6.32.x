@@ -756,6 +756,9 @@ static void init_Bluetooth_gpio_table(void)
 
 static int bluetooth_power(int on)
 {
+    printk(KERN_ERR "AFNF bluetooth_power 1 : on=0x%08x", on);
+
+
     int module_status=0,prev_status=0;
     bool bConfigWIFI;
 /* FIH, SimonSSChang, 2010/02/26 { */
@@ -787,6 +790,9 @@ static int bluetooth_power(int on)
     printk(KERN_INFO "on = 0x%08x", on);
 #endif
 
+    printk(KERN_ERR "AFNF 2 bConfigWIFI=%d", bConfigWIFI);
+
+
     if(bConfigWIFI)
     {
         prev_status = wifi_status;
@@ -794,6 +800,10 @@ static int bluetooth_power(int on)
 #ifdef CONFIG_FIH_FXX
         wifi_status = on & ~(WIFI_CONTROL_MASK | WIFI_SUSPEND_CONTROL_MASK); 
 #endif
+
+        printk(KERN_ERR "AFNF 31 wifi_status=%d", wifi_status);
+
+
         if( wifi_status == prev_status )
         {
             printk(KERN_ERR "%s: WIFI already turn %s\n", __func__,  (wifi_status?"ON":"OFF") );
@@ -804,6 +814,8 @@ static int bluetooth_power(int on)
             module_status = MODULE_TURN_ON;
         else if(!wifi_status && !bt_status)
             module_status = MODULE_TURN_OFF;
+
+        printk(KERN_ERR "AFNF 32 module_status=%d", module_status);
 
     }else {
         prev_status = bt_status;
@@ -820,6 +832,11 @@ static int bluetooth_power(int on)
             module_status = MODULE_TURN_OFF;
     }
 
+
+    printk(KERN_ERR "AFNF 4 bt_status=%d, wifi_status=%d", bt_status, wifi_status);
+
+
+
     //power control before module on/off
     if(!bConfigWIFI &&  !bt_status) {     //Turn BT off
         printk(KERN_DEBUG "%s : Turn BT off.\n", __func__);
@@ -833,8 +850,15 @@ static int bluetooth_power(int on)
     }else if(bConfigWIFI && !wifi_status) {  //Turn WIFI OFF
         printk(KERN_DEBUG "%s : Turn WIFI off.\n", __func__);
 
+
 /* let ar6000 driver to turn on/off power when enter suspend/resume */
 #ifdef CONFIG_FIH_FXX
+
+
+    printk(KERN_ERR "AFNF 5 bConfigWIFI_suspend=%d", bConfigWIFI_suspend);
+
+
+
         if(!bConfigWIFI_suspend) {
         if(ar6k_wifi_status_cb) {
             wifi_power_on=0;
@@ -851,6 +875,10 @@ static int bluetooth_power(int on)
 
     //Turn module on/off
     if(module_status == MODULE_TURN_ON) {   //turn module on
+
+    printk(KERN_ERR "AFNF 61 module_status=MODULE_TURN_ON");
+
+
         printk(KERN_DEBUG "%s : Turn module(A22) on.\n", __func__);
         //FIH_ADQ.B.1741 turn on BT is too bad
         gpio_direction_output(76,1);
@@ -866,6 +894,9 @@ static int bluetooth_power(int on)
         value = gpio_get_value(34);
         printk(KERN_DEBUG "%s : GPIO 34 is %d.\n", __func__, value);
     }else if(module_status == MODULE_TURN_OFF) { //turn module off
+
+    printk(KERN_ERR "AFNF 62 module_status=MODULE_TURN_OFF");
+
         printk(KERN_DEBUG "%s : Turn module(A22) off.\n", __func__);
         gpio_direction_output(34,0);
         gpio_direction_output(77,0);
@@ -873,6 +904,11 @@ static int bluetooth_power(int on)
     }
 
     if(!bConfigWIFI &&  !bt_status) {  //Turn BT off
+    
+    
+    printk(KERN_ERR "AFNF 71  Turn BT off");
+    
+    
 /* FIH, WilsonWHLee, 2009/07/30 { */
 /* [FXX_CR], re-configure GPIO when BT turn on/off */
 #if CONFIG_FIH_FXX  
@@ -884,6 +920,10 @@ static int bluetooth_power(int on)
 	gpio_tlmm_config(GPIO_CFG(42, 0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA),GPIO_CFG_ENABLE); 	/* BT_WAKE_HOST */
 #endif
     }else if(!bConfigWIFI &&  bt_status){    //Turn BT on
+    
+        printk(KERN_ERR "AFNF 72  Turn BT on");
+    
+    
         gpio_direction_output(27,0);
         mdelay(10);
         gpio_direction_output(27,1);
@@ -892,6 +932,11 @@ static int bluetooth_power(int on)
         printk(KERN_DEBUG "%s : GPIO 27 is %d.\n", __func__, value);
         mdelay(10);
     }else if(bConfigWIFI && wifi_status) { //Turn WIFI on
+     
+        printk(KERN_ERR "AFNF 73  Turn WIFI on");
+    
+    
+     
         gpio_direction_output(96,1);
         value = 0;
         value = gpio_get_value(96);
@@ -912,7 +957,11 @@ static int bluetooth_power(int on)
         }else
             printk(KERN_ERR "!!!wifi_power Fail:  ar6k_wifi_status_cb_devid is NULL \n");
 }
-    }else if(bConfigWIFI && !wifi_status) {  //Turn WIFI OFF        
+    }else if(bConfigWIFI && !wifi_status) {  //Turn WIFI OFF
+    
+        printk(KERN_ERR "AFNF 74  Turn WIFI OFF");
+    
+            
     }
 
     spin_unlock(&wif_bt_lock);
@@ -924,6 +973,11 @@ static int bluetooth_power(int on)
 #ifdef CONFIG_FIH_FXX
 int wifi_power(int on)
 {
+
+    printk(KERN_INFO "AFNF wifi_power on=0x%08x", on);
+
+   
+
     int ret;
     ret = bluetooth_power(on);
     printk(KERN_INFO "wifi_power ret = %d\n", ret);
@@ -1036,12 +1090,14 @@ static struct i2c_board_info i2c_devices[] = {
 	{
 		I2C_BOARD_INFO("max8831", 0x9a>>1),
 	},
+#ifndef CONFIG_MUCHTEL_A1
 #ifdef CONFIG_FIH_FXX
 {
     I2C_BOARD_INFO("ft5202", 0x72 >> 1),
     .irq            = MSM_GPIO_TO_INT(89),
     .platform_data  = &focal5202_device,
 },
+#endif
 #endif
 #ifdef CONFIG_FIH_FXX
         {
