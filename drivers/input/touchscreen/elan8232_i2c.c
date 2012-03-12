@@ -424,7 +424,11 @@ EXPORT_SYMBOL(notify_from_proximity);
 static void bi8232_isr_workqueue(struct work_struct *work)
 {
 	struct input_dev *input = bi8232->input;
+#ifdef CONFIG_MUCHTEL_A1
+	uint32_t poc = 0;
+#else
 	uint32_t poc = FIH_READ_POWER_ON_CAUSE();
+#endif
 	int cnt, virtual_button;  //Modified for new CAP sample by Stanley (2009/05/25)
 
 	disable_irq(bi8232->client->irq);
