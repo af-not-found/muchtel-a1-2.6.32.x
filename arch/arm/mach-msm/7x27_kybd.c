@@ -76,6 +76,12 @@ static int EnableKeyInt = 0; // 1:enable key interrupt
 #define SWITCH_KEY_ENABLE               1
 #define CENTER_KEY_ENABLE               1
 
+#ifdef CONFIG_MUCHTEL_A1
+#define GEN_KEY_ENABLE                  0
+#else
+#define GEN_KEY_ENABLE                  1
+#endif
+
 #define HEADSET_DECTECT_SUPPORT         1
 
 #define KEYPAD_DEBUG                    1
@@ -124,10 +130,12 @@ struct Q7x27_kybd_record {
 	uint8_t kybd_connected;
 	struct	delayed_work kb_cmdq;
 
+#if GEN_KEY_ENABLE
 	//struct	work_struct kybd_generalkey;
     struct  work_struct kybd_generalkey1;   //FIH_key
     struct  work_struct kybd_generalkey2;   //FIH_key
 	//struct	work_struct kybd_volkey;
+#endif
 
 #if VOLUME_KEY_ENABLE // Peter, Debug
 	struct	work_struct kybd_volkey1;
@@ -305,11 +313,15 @@ static irqreturn_t Q7x27_kybd_irqhandler(int irq, void *dev_id)
 
     if (kbdrec->kybd_connected) {
 
+#if GEN_KEY_ENABLE
 		if (MSM_GPIO_TO_INT(kbdrec->key_1_pin) == irq){
 			schedule_work(&kbdrec->kybd_generalkey1);				
 		} else if (MSM_GPIO_TO_INT(kbdrec->key_2_pin) == irq){
 			schedule_work(&kbdrec->kybd_generalkey2);
 		}
+#else
+        if(0){}
+#endif
 		
 #if VOLUME_KEY_ENABLE // Peter, Debug
 		else if (MSM_GPIO_TO_INT(kbdrec->volup_pin) == irq){
@@ -353,6 +365,7 @@ static int Q7x27_kybd_irqsetup(struct Q7x27_kybd_record *kbdrec)
 {
 	int rc;
 		
+#if GEN_KEY_ENABLE
 	/* KEY 1 and KEY 2 keys interrupt */
 	//FIH, NicoleWeng, 2010/05/26 for F0XE.B-955 { 
 	if(g_Send)
@@ -376,7 +389,8 @@ static int Q7x27_kybd_irqsetup(struct Q7x27_kybd_record *kbdrec)
     		rc = -EIO;
         }
     }
-	
+#endif
+
 	
 #if VOLUME_KEY_ENABLE // Peter, Debug
 	/* Vol UP and Vol DOWN keys interrupt */
@@ -504,8 +518,10 @@ int Q7x27_kybd_hookswitch_irqsetup(bool activate_irq)
 
 static int Q7x27_kybd_release_gpio(struct Q7x27_kybd_record *kbrec)
 {
+#if GEN_KEY_ENABLE
 	int kbd_key_1_pin	= kbrec->key_1_pin;
 	int kbd_key_2_pin	= kbrec->key_2_pin;
+#endif
 
 #if VOLUME_KEY_ENABLE // Peter, Debug
 	int kbd_volup_pin	= kbrec->volup_pin;
@@ -528,8 +544,10 @@ static int Q7x27_kybd_release_gpio(struct Q7x27_kybd_record *kbrec)
 #endif
 /* } FIH, PeterKCTseng, @20090527 */
 
+#if GEN_KEY_ENABLE
 	gpio_free(kbd_key_1_pin);
 	gpio_free(kbd_key_2_pin);
+#endif
 
 #if VOLUME_KEY_ENABLE // Peter, Debug
 	gpio_free(kbd_volup_pin);
@@ -572,6 +590,7 @@ static int Q7x27_kybd_config_gpio(struct Q7x27_kybd_record *kbrec)
 
 	int rc;
 
+#if GEN_KEY_ENABLE
 	rc = gpio_request(kbd_key_1_pin, "gpio_key_1_pin");
 	if (rc) {
 		goto err_gpioconfig;
@@ -580,6 +599,7 @@ static int Q7x27_kybd_config_gpio(struct Q7x27_kybd_record *kbrec)
 	if (rc) {
 		goto err_gpioconfig;
 	}
+#endif
 
 #if VOLUME_KEY_ENABLE // Peter, Debug
 	rc = gpio_request(kbd_volup_pin, "gpio_keybd_volup");
@@ -620,6 +640,7 @@ static int Q7x27_kybd_config_gpio(struct Q7x27_kybd_record *kbrec)
 #endif
 /* } FIH, PeterKCTseng, @20090527 */
 
+#if GEN_KEY_ENABLE
 	rc = gpio_direction_input(kbd_key_1_pin);
 	if (rc) {
 		goto err_gpioconfig;
@@ -628,6 +649,7 @@ static int Q7x27_kybd_config_gpio(struct Q7x27_kybd_record *kbrec)
 	if (rc) {
 		goto err_gpioconfig;
 	}
+#endif
 
 #if VOLUME_KEY_ENABLE // Peter, Debug
 	rc = gpio_direction_input(kbd_volup_pin);
@@ -674,6 +696,7 @@ err_gpioconfig:
 	return rc;
 }
 
+#if GEN_KEY_ENABLE
 static void Q7627_kybd_generalkey1(struct work_struct *work)
 {
 	struct Q7x27_kybd_record *kbdrec	= container_of(work, struct Q7x27_kybd_record, kybd_generalkey1);
@@ -982,6 +1005,7 @@ static void Q7x27_kybd_generalkey2(struct work_struct *work)
     }//if(EnableKeyInt)
 	enable_irq(MSM_GPIO_TO_INT(kbdrec->key_2_pin));
 }
+#endif
 
 #if VOLUME_KEY_ENABLE // Peter, Debug
 static void Q7x27_kybd_volkey1(struct work_struct *work)
@@ -1406,8 +1430,10 @@ static void Q7x27_kybd_shutdown(struct Q7x27_kybd_record *rd)
 		printk(KERN_INFO "disconnecting keyboard\n");
 		rd->kybd_connected = 0;
 
+#if GEN_KEY_ENABLE
 		free_irq(MSM_GPIO_TO_INT(rd->key_1_pin), rd);
 		free_irq(MSM_GPIO_TO_INT(rd->key_2_pin), rd);
+#endif
 
 #if VOLUME_KEY_ENABLE // Peter, Debug
 		free_irq(MSM_GPIO_TO_INT(rd->volup_pin), rd);
@@ -1430,8 +1456,10 @@ static void Q7x27_kybd_shutdown(struct Q7x27_kybd_record *rd)
 #endif
 /* } FIH, PeterKCTseng, @20090527 */
 
+#if GEN_KEY_ENABLE
 		flush_work(&rd->kybd_generalkey1);
 		flush_work(&rd->kybd_generalkey2);        
+#endif
 
 #if VOLUME_KEY_ENABLE // Peter, Debug
 		flush_work(&rd->kybd_volkey1);
@@ -1490,9 +1518,11 @@ static struct input_dev *create_inputdev_instance(struct Q7x27_kybd_record *kbdr
         idev->relbit[0] = BIT(REL_X) | BIT(REL_Y);
 /* } FIH, PeterKCTseng, @20090603 */
 
+#if GEN_KEY_ENABLE
 		/* a few more misc keys */
 		__set_bit(KEY_SEND, idev->keybit);
 		__set_bit(KEY_END, idev->keybit);
+#endif
 //FIH, NicoleWeng, 2010/05/26 for F0XE.B-955 {
 		__set_bit(KEY_F23, idev->keybit);
 // } FIH, NicoleWeng, 2010/05/26 for F0XE.B-955 
@@ -1574,11 +1604,16 @@ void Q7x27_kybd_early_suspend(struct early_suspend *h)
 		enable_irq_wake(MSM_GPIO_TO_INT(rd->center_pin));
 		enable_irq_wake(MSM_GPIO_TO_INT(rd->volup_pin));
 		enable_irq_wake(MSM_GPIO_TO_INT(rd->voldn_pin));
+#if GEN_KEY_ENABLE
 		enable_irq_wake(MSM_GPIO_TO_INT(rd->key_1_pin));
+#endif
  	}
 
 
+#if GEN_KEY_ENABLE
 	disable_irq(MSM_GPIO_TO_INT(rd->key_2_pin));
+#endif
+
 	disable_irq(MSM_GPIO_TO_INT(rd->cam_sw_t_pin));
 	disable_irq(MSM_GPIO_TO_INT(rd->cam_sw_f_pin));
 
@@ -1599,8 +1634,10 @@ void Q7x27_kybd_late_resume(struct early_suspend *h)
 		disable_irq_wake(MSM_GPIO_TO_INT(rd->voldn_pin));
 	}
 
+#if GEN_KEY_ENABLE
 	enable_irq(MSM_GPIO_TO_INT(rd->key_1_pin));
 	enable_irq(MSM_GPIO_TO_INT(rd->key_2_pin));
+#endif
 	enable_irq(MSM_GPIO_TO_INT(rd->volup_pin));
 	enable_irq(MSM_GPIO_TO_INT(rd->voldn_pin));
 	enable_irq(MSM_GPIO_TO_INT(rd->cam_sw_t_pin));
@@ -1641,6 +1678,8 @@ to earlysuspend */
 
 static int Q7x27_kybd_probe(struct platform_device *pdev)
 {
+    printk(KERN_ERR "Q7x27_kybd_probe\n");
+
 	struct Q7x27_kybd_platform_data *setup_data;
 	int rc = -ENOMEM;
 
@@ -1699,8 +1738,10 @@ static int Q7x27_kybd_probe(struct platform_device *pdev)
 #endif
 /* } FIH, PeterKCTseng, @20090520 */
 
+#if GEN_KEY_ENABLE
 	rd->key_1_pin		= setup_data->key_1_pin;
 	rd->key_2_pin		= setup_data->key_2_pin;
+#endif
 
 #if VOLUME_KEY_ENABLE // Peter, Debug
 	rd->volup_pin		= setup_data->volup_pin;
@@ -1787,20 +1828,21 @@ static int Q7x27_kybd_probe(struct platform_device *pdev)
 	if (rc)
 		goto failexit1;
 
+#if GEN_KEY_ENABLE
 	if(g_HWID  >= CMCS_7627_EVB1)
 	{
 		//Initialize IRQ
 		INIT_WORK(&rd->kybd_generalkey1, Q7627_kybd_generalkey1);
     	INIT_WORK(&rd->kybd_generalkey2, Q7627_kybd_generalkey2);
-		
 	}
 	else
 	{
-		
 		//Initialize IRQ
 		INIT_WORK(&rd->kybd_generalkey1, Q7x27_kybd_generalkey1);
     	INIT_WORK(&rd->kybd_generalkey2, Q7x27_kybd_generalkey2);
 	}
+#endif
+
 
 #if VOLUME_KEY_ENABLE // Peter, Debug
 	INIT_WORK(&rd->kybd_volkey1, Q7x27_kybd_volkey1);
@@ -1930,8 +1972,11 @@ retry2:
         rd->kybd_connected = 1;
 	 return;
 failexit2:
+
+#if GEN_KEY_ENABLE
 	free_irq(MSM_GPIO_TO_INT(rd->key_1_pin), rd);
 	free_irq(MSM_GPIO_TO_INT(rd->key_2_pin), rd);
+#endif
 
 #if VOLUME_KEY_ENABLE // Peter, Debug
 	free_irq(MSM_GPIO_TO_INT(rd->volup_pin), rd);
