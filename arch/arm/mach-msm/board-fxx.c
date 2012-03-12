@@ -756,9 +756,6 @@ static void init_Bluetooth_gpio_table(void)
 
 static int bluetooth_power(int on)
 {
-    printk(KERN_ERR "AFNF bluetooth_power 1 : on=0x%08x", on);
-
-
     int module_status=0,prev_status=0;
     bool bConfigWIFI;
 /* FIH, SimonSSChang, 2010/02/26 { */
@@ -790,9 +787,6 @@ static int bluetooth_power(int on)
     printk(KERN_INFO "on = 0x%08x", on);
 #endif
 
-    printk(KERN_ERR "AFNF 2 bConfigWIFI=%d", bConfigWIFI);
-
-
     if(bConfigWIFI)
     {
         prev_status = wifi_status;
@@ -800,10 +794,6 @@ static int bluetooth_power(int on)
 #ifdef CONFIG_FIH_FXX
         wifi_status = on & ~(WIFI_CONTROL_MASK | WIFI_SUSPEND_CONTROL_MASK); 
 #endif
-
-        printk(KERN_ERR "AFNF 31 wifi_status=%d", wifi_status);
-
-
         if( wifi_status == prev_status )
         {
             printk(KERN_ERR "%s: WIFI already turn %s\n", __func__,  (wifi_status?"ON":"OFF") );
@@ -814,8 +804,6 @@ static int bluetooth_power(int on)
             module_status = MODULE_TURN_ON;
         else if(!wifi_status && !bt_status)
             module_status = MODULE_TURN_OFF;
-
-        printk(KERN_ERR "AFNF 32 module_status=%d", module_status);
 
     }else {
         prev_status = bt_status;
@@ -831,11 +819,6 @@ static int bluetooth_power(int on)
         else if(!wifi_status && !bt_status)
             module_status = MODULE_TURN_OFF;
     }
-
-
-    printk(KERN_ERR "AFNF 4 bt_status=%d, wifi_status=%d", bt_status, wifi_status);
-
-
 
     //power control before module on/off
     if(!bConfigWIFI &&  !bt_status) {     //Turn BT off
@@ -853,12 +836,6 @@ static int bluetooth_power(int on)
 
 /* let ar6000 driver to turn on/off power when enter suspend/resume */
 #ifdef CONFIG_FIH_FXX
-
-
-    printk(KERN_ERR "AFNF 5 bConfigWIFI_suspend=%d", bConfigWIFI_suspend);
-
-
-
         if(!bConfigWIFI_suspend) {
         if(ar6k_wifi_status_cb) {
             wifi_power_on=0;
@@ -875,10 +852,6 @@ static int bluetooth_power(int on)
 
     //Turn module on/off
     if(module_status == MODULE_TURN_ON) {   //turn module on
-
-    printk(KERN_ERR "AFNF 61 module_status=MODULE_TURN_ON");
-
-
         printk(KERN_DEBUG "%s : Turn module(A22) on.\n", __func__);
         //FIH_ADQ.B.1741 turn on BT is too bad
         gpio_direction_output(76,1);
@@ -894,9 +867,6 @@ static int bluetooth_power(int on)
         value = gpio_get_value(34);
         printk(KERN_DEBUG "%s : GPIO 34 is %d.\n", __func__, value);
     }else if(module_status == MODULE_TURN_OFF) { //turn module off
-
-    printk(KERN_ERR "AFNF 62 module_status=MODULE_TURN_OFF");
-
         printk(KERN_DEBUG "%s : Turn module(A22) off.\n", __func__);
         gpio_direction_output(34,0);
         gpio_direction_output(77,0);
@@ -904,11 +874,6 @@ static int bluetooth_power(int on)
     }
 
     if(!bConfigWIFI &&  !bt_status) {  //Turn BT off
-    
-    
-    printk(KERN_ERR "AFNF 71  Turn BT off");
-    
-    
 /* FIH, WilsonWHLee, 2009/07/30 { */
 /* [FXX_CR], re-configure GPIO when BT turn on/off */
 #if CONFIG_FIH_FXX  
@@ -920,10 +885,6 @@ static int bluetooth_power(int on)
 	gpio_tlmm_config(GPIO_CFG(42, 0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA),GPIO_CFG_ENABLE); 	/* BT_WAKE_HOST */
 #endif
     }else if(!bConfigWIFI &&  bt_status){    //Turn BT on
-    
-        printk(KERN_ERR "AFNF 72  Turn BT on");
-    
-    
         gpio_direction_output(27,0);
         mdelay(10);
         gpio_direction_output(27,1);
@@ -932,11 +893,6 @@ static int bluetooth_power(int on)
         printk(KERN_DEBUG "%s : GPIO 27 is %d.\n", __func__, value);
         mdelay(10);
     }else if(bConfigWIFI && wifi_status) { //Turn WIFI on
-     
-        printk(KERN_ERR "AFNF 73  Turn WIFI on");
-    
-    
-     
         gpio_direction_output(96,1);
         value = 0;
         value = gpio_get_value(96);
@@ -958,10 +914,6 @@ static int bluetooth_power(int on)
             printk(KERN_ERR "!!!wifi_power Fail:  ar6k_wifi_status_cb_devid is NULL \n");
 }
     }else if(bConfigWIFI && !wifi_status) {  //Turn WIFI OFF
-    
-        printk(KERN_ERR "AFNF 74  Turn WIFI OFF");
-    
-            
     }
 
     spin_unlock(&wif_bt_lock);
@@ -973,11 +925,6 @@ static int bluetooth_power(int on)
 #ifdef CONFIG_FIH_FXX
 int wifi_power(int on)
 {
-
-    printk(KERN_INFO "AFNF wifi_power on=0x%08x", on);
-
-   
-
     int ret;
     ret = bluetooth_power(on);
     printk(KERN_INFO "wifi_power ret = %d\n", ret);
@@ -1164,8 +1111,10 @@ static void config_gpio_table(uint32_t *table, int len)
 static uint32_t keypad_gpio_table[] = {
 	GPIO_CFG(41,  0, GPIO_CFG_INPUT, GPIO_CFG_NO_PULL, GPIO_CFG_16MA), /* Volume Up Key    */
 	GPIO_CFG(36,  0, GPIO_CFG_INPUT, GPIO_CFG_NO_PULL, GPIO_CFG_16MA), /* Volume Down Key  */
+#ifndef CONFIG_MUCHTEL_A1
 	GPIO_CFG(28,  0, GPIO_CFG_INPUT, GPIO_CFG_NO_PULL, GPIO_CFG_16MA), /* Send key         */
 	GPIO_CFG(19,  0, GPIO_CFG_INPUT, GPIO_CFG_NO_PULL, GPIO_CFG_16MA), /* End Key          */
+#endif
 };
 #endif /* CONFIG_FIH_F9xx_GPIO_KEYPAD */
 
@@ -1271,6 +1220,12 @@ static struct platform_device msm_camera_sensor_ov5642 = {
 #endif
 
 #ifdef CONFIG_OV5642AF
+
+static struct msm_camera_sensor_flash_data flash_ov5642af = {
+        .flash_type = MSM_CAMERA_FLASH_LED,
+        .flash_src  = &msm_flash_src
+};
+
 static struct msm_camera_sensor_info msm_camera_sensor_ov5642af_data = {
 	.sensor_name    = "ov5642af",
 	.sensor_reset   = 0,
@@ -1278,6 +1233,7 @@ static struct msm_camera_sensor_info msm_camera_sensor_ov5642af_data = {
 	.vcm_pwd        = 0,
 	.vcm_enable     = 0,
 	.pdata          = &msm_camera_device_data,
+	.flash_data     = &flash_ov5642af,
 };
 
 static struct platform_device msm_camera_sensor_ov5642af = {
@@ -1309,8 +1265,8 @@ static struct platform_device msm_camera_sensor_ov3642 = {
 static u32 msm_calculate_batt_capacity(u32 current_voltage);
 
 static struct msm_psy_batt_pdata msm_psy_batt_data = {
-	.voltage_min_design 	= 2800,
-	.voltage_max_design	= 4300,
+	.voltage_min_design 	= 3620,
+	.voltage_max_design	    = 4100,
 	.avail_chg_sources   	= AC_CHG | USB_CHG ,
 	.batt_technology        = POWER_SUPPLY_TECHNOLOGY_LION,
 	.calculate_capacity	= &msm_calculate_batt_capacity,
