@@ -135,12 +135,19 @@ typedef struct _VOLT_TO_PERCENT
 /* [FXX_CR], Modofy for using different profile for different battery*/
 static VOLT_TO_PERCENT g_Volt2PercentMode[10] =
 {
-    /* FIH, Michael Kao, 2009/12/21 */
-    /* [FXX_CR], Modofy for using 300mA discharging table*/
-    /* FIH, Michael Kao, 2010/01/11 */
-    /* [FXX_CR], Adjust power off voltage to 3.5V*/
-    { 3500, 0},	   // empty,    Rx Table
-    /* FIH, Michael Kao, 2010/01/11 */
+#ifdef CONFIG_MUCHTEL_A1
+    { 3500,  0},    // empty,    Rx Table
+    { 3650,  5},    // level 1
+    { 3680, 10},    // level 2
+    { 3692, 15},    // level 3
+    { 3705, 25},    // level 4
+    { 3720, 35},    // level 5
+    { 3750, 45},    // level 6
+    { 3800, 55},    // level 7
+    { 3930, 75},    // level 8
+    { 4100, 100},   // full
+#else
+    { 3500,  0},    // empty,    Rx Table
     { 3610, 15},    // level 1
     { 3675, 25},    // level 2
     { 3695, 35},    // level 3
@@ -150,6 +157,7 @@ static VOLT_TO_PERCENT g_Volt2PercentMode[10] =
     { 3900, 75},    // level 7
     { 3990, 85},    // level 8
     { 4100, 100},   // full
+#endif
 };
 
 /* FIH, Michael Kao, 2009/08/26 */
@@ -560,7 +568,7 @@ static int	ChangeToVoltPercentage(unsigned Vbat)
 		if(Vbat <= g_Volt2PercentMode[iC].dwVolt)
            		break;
 	}
-#if 0
+#if 1
 	if(iC==0)
 		Volt_pec=0;
 	else if(iC==10)//Michael modify, 2009/10/21
@@ -568,7 +576,9 @@ static int	ChangeToVoltPercentage(unsigned Vbat)
 	else if((iC>=0)&&(iC<10))//Michael modify, 2009/10/21
 	{
 		Volt_pec=g_Volt2PercentMode[iC-1].dwPercent + 
-			( Vbat -g_Volt2PercentMode[iC-1].dwVolt) * ( g_Volt2PercentMode[iC].dwPercent -g_Volt2PercentMode[iC-1].dwPercent)/( g_Volt2PercentMode[iC].dwVolt -g_Volt2PercentMode[iC-1].dwVolt);
+			( Vbat -g_Volt2PercentMode[iC-1].dwVolt) * 
+			        ( g_Volt2PercentMode[iC].dwPercent -g_Volt2PercentMode[iC-1].dwPercent)
+			           /  ( g_Volt2PercentMode[iC].dwVolt -g_Volt2PercentMode[iC-1].dwVolt);
 	}
 #else
 	if (Vbat <= 3500)
@@ -578,6 +588,7 @@ static int	ChangeToVoltPercentage(unsigned Vbat)
 	else
 		Volt_pec = ((Vbat - 3500) * 100 / (4100 - 3500));
 #endif
+
 	/* FIH, Michael Kao, 2009/10/14 */
 	/* FIH, Michael Kao, 2009/09/10 */
 	/* [FXX_CR], charging full protection*/
@@ -868,7 +879,8 @@ static void zeus_battery_refresh_values(struct zeus_battery_update *zbu) {
 		}
 	}
 
-	printk(KERN_DEBUG "batt : %d - %d, EN = %d, 1A = %d, SET = %d\n", percent_now, g_charging_state, gpio_get_value(GPIO_CHR_EN), gpio_get_value(CHR_1A), gpio_get_value(USBSET));
+	printk(KERN_DEBUG "zeus_battery : %d\%, state=%d, EN=%d, 1A=%d, SET=%d\n", percent_now, g_charging_state, gpio_get_value(GPIO_CHR_EN), gpio_get_value(CHR_1A), gpio_get_value(USBSET));
+	
     if ((g_charging_state_last != g_charging_state))
 		tca6507_charger_state_report(g_charging_state);
 	zbu->data.capacity=percent_now;
