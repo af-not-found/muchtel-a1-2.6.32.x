@@ -1,4 +1,4 @@
-RstreamA1 CM7.1 EAv7.2用改変カーネル(2.6.32.9-EA-rstream-a1 by afnf)
+RstreamA1 CM7.1 EAv7.2用改変カーネル(2.6.32.9-EA-muchtel-a1 by afnf)
 
 
 1. 以下コマンドでビルド
@@ -7,6 +7,7 @@ make ARCH=arm CROSS_COMPILE=$CCOMPILER fxx_muchtel_a1_defconfig
 time make ARCH=arm CROSS_COMPILE=$CCOMPILER -j1 2>&1 | tee makelog.txt
 
 2. mkbootimgでboot.img作成
+
 
 3. CM7.1 EAv7.2適用後、fastbootモードから以下を実行
 fastboot flash boot boot.img
