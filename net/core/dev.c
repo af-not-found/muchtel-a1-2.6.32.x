@@ -5147,7 +5147,7 @@ struct net_device *alloc_netdev_mq(int sizeof_priv, const char *name,
 	/* ensure 32-byte alignment of whole construct */
 	alloc_size += NETDEV_ALIGN - 1;
 
-printk(KERN_ERR "AFNF alloc_netdev: kzalloc=%d\n", alloc_size);
+//printk(KERN_ERR "AFNF alloc_netdev: kzalloc=%d\n", alloc_size);
 
 	p = kzalloc(alloc_size, GFP_KERNEL);
 	if (!p) {
