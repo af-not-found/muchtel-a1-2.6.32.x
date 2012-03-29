@@ -1,30 +1,78 @@
-RstreamA1 CM7.1 EAv7.2用改変カーネル(2.6.32.9-EA-muchtel-a1 by afnf)
+
+RstreamA1 CM7.1用改変カーネル(2.6.32.9-EA-muchtel-a1 by afnf)
+https://github.com/af-not-found/muchtel-a1-2.6.32.x
 
 
-1. 以下コマンドでビルド
-export CCOMPILER=/PATH_TO/prebuilt/linux-x86/toolchain/arm-eabi-4.4.3/bin/arm-eabi-
-make ARCH=arm CROSS_COMPILE=$CCOMPILER fxx_muchtel_a1_defconfig
-time make ARCH=arm CROSS_COMPILE=$CCOMPILER -j1 2>&1 | tee makelog.txt
-
-2. mkbootimgでboot.img作成
 
 
-3. CM7.1 EAv7.2適用後、fastbootモードから以下を実行
+
+====================================================================================
+適用方法
+====================================================================================
+
+CM7.1適用後、fastbootモードから以下を実行
 fastboot flash boot boot.img
 fastboot reboot
 →通常起動
 adb shell mount -o remount rw /system
 adb push libcamera.so /system/lib
 adb push liboemcamera.so /system/lib
+adb push libnetutils.so /system/lib
 →もう一回再起動
 
-※libcamera.soとliboemcamera.soは、framework_libに入っているファイルをリネームする。
-
-・挙動がおかしい場合は、リカバリモードからwipe cacheすると直るかもしれない。
+・挙動がおかしい場合は、リカバリモードからwipe cacheすると直るかもしれない
 ・カメラの接続に失敗したり、オートフォーカスが動作しないことがあるが、
-　カメラアプリを再起動すると直る場合が多い。
+　カメラアプリを再起動すると直る場合が多い
 
 
-オリジナルのカーネルソース
+
+
+====================================================================================
+そのほか
+====================================================================================
+
+オリジナルのカーネルソースは以下
 https://github.com/Edgar86/boston-2.6.32.x
+
+
+liboemcamera.soは、CM7.1版のそれについて文字列"00fd"を"003c"にバイナリ改変したもの
+
+その他の.soファイル差分はsrcディレクトリ参照
+
+ビルドとboot.img作成方法は以下
+export CCOMPILER=/PATH_TO/prebuilt/linux-x86/toolchain/arm-eabi-4.4.3/bin/arm-eabi-
+make ARCH=arm CROSS_COMPILE=$CCOMPILER fxx_muchtel_a1_defconfig
+time make ARCH=arm CROSS_COMPILE=$CCOMPILER -j1 2>&1 | tee makelog.txt
+./mkbootimg --cmdline 'mem=210M console=null androidboot.hardware=qcom' --kernel kernel.zimg --ramdisk ramdisk.gz --base 0x12e00000 -o boot.img
+
+
+
+
+====================================================================================
+履歴
+====================================================================================
+
+2012/01/09 #3
+カメラが動くように（libcamera.so、liboemcamera.soの追加も含む）
+キーマッピングの問題を修正
+
+2012/01/10 #4
+CONFIG_CPU_FREQ_STAT=y
+
+2012/01/14 #9
+wifiがONできなくなる問題に対応するため、ar6kドライバにパッチを当てた
+http://forum.geeksphone.com/index.php?topic=785.msg18328#msg18328
+
+2012/03/16 #15
+Menuキーでキーボードが立ち上がるようになってしまう問題を回避
+不必要なキー周りのIRQを無効にした
+電池残量を非線形で計算するように
+固定IPにおけるwifi瞬断問題回避のため、libnetutils.soを修正
+
+2012/03/29 #23
+APモード動作可能となり、wifiテザリングできるようになった？
+デフォルトの電池残量計算を線形に戻し、カーネルパラメータで変更可能に
+echo "zeusbatt.calcType=2" > /etc/sysctl.conf
+各モードは以下参照
+http://dl.dropbox.com/u/66501041/zeus_battery_f0x_20130329.png
 
