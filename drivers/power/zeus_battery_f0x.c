@@ -72,6 +72,56 @@
 #include <linux/proc_fs.h>
 
 
+
+#ifdef CONFIG_ZEUSBATT_HACK
+#include <linux/sysctl.h>
+
+static struct ctl_table_header *sysctl_table_header;
+
+typedef struct batt_sysctl_val {
+	int min;
+	int val;
+	int max;
+} batt_sysctl_val_t;
+
+typedef struct batt_param {
+	batt_sysctl_val_t calcType;
+} batt_param_t;
+
+batt_param_t batt_params = {
+	.calcType = {2, 0, 3},   // default=2, min=0, max=3
+};
+
+static ctl_table zeusbatt_table[] = {
+	{
+		.ctl_name	= 1,
+		.procname	= "calcType",
+		.data		= &batt_params.calcType.val,
+		.maxlen		= sizeof(int),
+		.mode		= 0644,
+		.proc_handler	= &proc_dointvec_minmax,
+		.strategy	= &sysctl_intvec,
+		.extra1		= &batt_params.calcType.min,
+		.extra2		= &batt_params.calcType.max,
+	},
+	{ .ctl_name = 0 }
+};
+
+static ctl_table zeusbatt_root_table[] = {
+	{
+		.ctl_name	= CTL_ZEUSBATT,
+		.procname	= "zeusbatt",
+		.mode		= 0555,
+		.child		= zeusbatt_table
+	},
+	{ .ctl_name = 0 }
+};
+
+#endif
+	
+
+
+
 /* +++ New charging temperature protection for Greco hardware */
 #define GET_TEMPERATURE_FROM_BATTERY_THERMAL    1
 #if GET_TEMPERATURE_FROM_BATTERY_THERMAL
@@ -131,22 +181,77 @@ typedef struct _VOLT_TO_PERCENT
     u16 dwVolt;
     u16 dwPercent;
 } VOLT_TO_PERCENT;
+
+
+
+
+#ifdef CONFIG_ZEUSBATT_HACK
+
+static VOLT_TO_PERCENT g_Volt2PercentModes[4][10] =
+{
+  // liner
+  {
+    { 3500,  0},
+    { 3590, 15},
+    { 3650, 25},
+    { 3710, 35},
+    { 3770, 45},
+    { 3830, 55},
+    { 3890, 65},
+    { 3950, 75},
+    { 4010, 85},
+    { 4100, 100}
+  }
+  ,
+  // mod1
+  {
+    { 3500,  0},
+    { 3650,  5},
+    { 3680, 10},
+    { 3692, 15},
+    { 3705, 25},
+    { 3720, 35},
+    { 3750, 45},
+    { 3800, 55},
+    { 3930, 75},
+    { 4100, 100},
+  }
+  ,
+  // mod2
+  {
+    { 3500,  0},
+    { 3650,  5},
+    { 3700, 10},
+    { 3722, 15},
+    { 3735, 25},
+    { 3760, 35},
+    { 3790, 45},
+    { 3840, 55},
+    { 3950, 75},
+    { 4100, 100},
+  }
+  ,
+  // mod3
+  {
+    { 3500,  0},
+    { 3650,  5},
+    { 3720, 10},
+    { 3752, 15},
+    { 3768, 25},
+    { 3800, 35},
+    { 3830, 45},
+    { 3880, 55},
+    { 3970, 75},
+    { 4100, 100},
+  }
+};
+
+#else
+
 /* FIH, Michael Kao, 2009/10/14 */
 /* [FXX_CR], Modofy for using different profile for different battery*/
 static VOLT_TO_PERCENT g_Volt2PercentMode[10] =
 {
-#ifdef CONFIG_MUCHTEL_A1
-    { 3500,  0},    // empty,    Rx Table
-    { 3650,  5},    // level 1
-    { 3680, 10},    // level 2
-    { 3692, 15},    // level 3
-    { 3705, 25},    // level 4
-    { 3720, 35},    // level 5
-    { 3750, 45},    // level 6
-    { 3800, 55},    // level 7
-    { 3930, 75},    // level 8
-    { 4100, 100},   // full
-#else
     { 3500,  0},    // empty,    Rx Table
     { 3610, 15},    // level 1
     { 3675, 25},    // level 2
@@ -157,8 +262,8 @@ static VOLT_TO_PERCENT g_Volt2PercentMode[10] =
     { 3900, 75},    // level 7
     { 3990, 85},    // level 8
     { 4100, 100},   // full
-#endif
 };
+#endif
 
 /* FIH, Michael Kao, 2009/08/26 */
 extern void tca6507_charger_state_report(int state);
@@ -560,7 +665,31 @@ static int	ChangeToVoltPercentage(unsigned Vbat)
 {
 	int Volt_pec=0;
 	int iC;
-	
+
+
+#ifdef CONFIG_ZEUSBATT_HACK
+
+	VOLT_TO_PERCENT* pVolt2PercentMode = &g_Volt2PercentModes[batt_params.calcType.val][0];
+
+	for(iC=0;iC<10;iC++)
+	{
+		if(Vbat <= pVolt2PercentMode[iC].dwVolt)
+           		break;
+	}
+	if(iC==0)
+		Volt_pec=0;
+	else if(iC==10)
+		Volt_pec=100;
+	else if((iC>=0)&&(iC<10))
+	{
+		Volt_pec=pVolt2PercentMode[iC-1].dwPercent + 
+			( Vbat -pVolt2PercentMode[iC-1].dwVolt) * 
+			        ( pVolt2PercentMode[iC].dwPercent -pVolt2PercentMode[iC-1].dwPercent)
+			           /  ( pVolt2PercentMode[iC].dwVolt -pVolt2PercentMode[iC-1].dwVolt);
+	}
+
+#else
+
 	/* FIH, Michael Kao, 2009/10/14 */
 	/* [FXX_CR], Modofy for using different profile for different battery*/
 	for(iC=0;iC<10;iC++)//Michael modify, 2009/10/21
@@ -568,7 +697,7 @@ static int	ChangeToVoltPercentage(unsigned Vbat)
 		if(Vbat <= g_Volt2PercentMode[iC].dwVolt)
            		break;
 	}
-#if 1
+#if 0
 	if(iC==0)
 		Volt_pec=0;
 	else if(iC==10)//Michael modify, 2009/10/21
@@ -588,6 +717,9 @@ static int	ChangeToVoltPercentage(unsigned Vbat)
 	else
 		Volt_pec = ((Vbat - 3500) * 100 / (4100 - 3500));
 #endif
+	
+#endif
+	
 
 	/* FIH, Michael Kao, 2009/10/14 */
 	/* FIH, Michael Kao, 2009/09/10 */
@@ -878,6 +1010,10 @@ static void zeus_battery_refresh_values(struct zeus_battery_update *zbu) {
 			g_charging_state = CHARGER_STATE_LOW_POWER;
 		}
 	}
+
+#ifdef CONFIG_ZEUSBATT_HACK
+	printk(KERN_DEBUG "sysctl:pm.zeusbatt.calcType=%d\n", batt_params.calcType.val);
+#endif
 
 	printk(KERN_DEBUG "zeus_battery : %d\%, state=%d, EN=%d, 1A=%d, SET=%d\n", percent_now, g_charging_state, gpio_get_value(GPIO_CHR_EN), gpio_get_value(CHR_1A), gpio_get_value(USBSET));
 	
@@ -1349,6 +1485,7 @@ static struct platform_driver zeus_battery_device = {
 	}
 };
 
+
 static int __init zeus_battery_init(void)
 {
     int ret;
@@ -1362,14 +1499,26 @@ static int __init zeus_battery_init(void)
     {
         goto ERROR;
     }
+
+#ifdef CONFIG_ZEUSBATT_HACK
+    sysctl_table_header = register_sysctl_table(zeusbatt_root_table);
+	if (!sysctl_table_header)
+	{
+		printk(KERN_ERR "zeus battery : register_sysctl_table() failed\n");
+        goto ERROR;
+    }
+#endif
 	
     ERROR:    
 	return ret;
-    
 }
 
 static void __exit zeus_battery_exit(void)
 {
+#ifdef CONFIG_ZEUSBATT_HACK
+	unregister_sysctl_table(sysctl_table_header);
+#endif
+
 	platform_driver_unregister(&zeus_battery_device);
 }
 

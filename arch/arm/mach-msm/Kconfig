@@ -191,6 +191,11 @@ config MUCHTEL_A1
 	bool "enable hacks for the Muchtel-A1"
 	default n
 
+config ZEUSBATT_HACK
+	depends on FIH_FXX
+	bool "enable hacks for the zeus_battery_f0x"
+	default n
+
 config MACH_SAPPHIRE
 	depends on ARCH_MSM7X01A
 	default n

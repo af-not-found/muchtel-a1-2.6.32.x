@@ -1186,6 +1186,14 @@ static const struct trans_ctl_table trans_arlan_table[] = {
 	{}
 };
 
+#ifdef CONFIG_ZEUSBATT_HACK
+static const struct trans_ctl_table trans_zeusbatt_table[] = {
+	{ 1,		"calcType"  },
+	{}
+};
+#endif
+
+
 static const struct trans_ctl_table trans_s390dbf_table[] = {
 	{ 5678 /* CTL_S390DBF_STOPPABLE */,	"debug_stoppable" },
 	{ 5679 /* CTL_S390DBF_ACTIVE */,	"debug_active" },
@@ -1230,6 +1238,9 @@ static const struct trans_ctl_table trans_root_table[] = {
 	{ CTL_ABI,	"abi" },
 	/* CTL_CPU not used */
 	{ CTL_ARLAN,	"arlan",	trans_arlan_table },
+#ifdef CONFIG_ZEUSBATT_HACK
+	{ CTL_ZEUSBATT,	"zeusbatt",	trans_zeusbatt_table },
+#endif	
 	{ CTL_S390DBF,	"s390dbf",	trans_s390dbf_table },
 	{ CTL_SUNRPC,	"sunrpc",	trans_sunrpc_table },
 	{ CTL_PM,	"pm",		trans_pm_table },
