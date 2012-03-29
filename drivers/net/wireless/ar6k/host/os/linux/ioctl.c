@@ -1214,6 +1214,7 @@ ar6000_ioctl_setparam(AR_SOFTC_T *ar, int param, int value)
     A_BOOL profChanged = FALSE;
     int ret=0;
 
+#if 0  // if 1, tethering doesn't work. this backport from 2.6.37 may be incorrect.
     if(ar->arNextMode == AP_NETWORK) {
         ar->ap_profile_flag = 1; /* There is a change in profile */
         switch (param) {
@@ -1225,6 +1226,7 @@ ar6000_ioctl_setparam(AR_SOFTC_T *ar, int param, int value)
                 return ret;
         }
     }
+#endif
 
     switch (param) {
         case IEEE80211_PARAM_WPA:

@@ -5446,6 +5446,11 @@ ar6000_ap_mode_profile_commit(struct ar6_softc *ar)
         A_PRINTF("Channel not set!!!\n");
         return -ECHRNG;
     }
+    
+A_PRINTF("AFNF ar6000_ap_mode_profile_commit called\n");
+A_PRINTF("AFNF  ar->arPairwiseCrypto = %d\n", ar->arPairwiseCrypto);
+A_PRINTF("AFNF  ar->arGroupCrypto    = %d\n", ar->arGroupCrypto);
+A_PRINTF("AFNF  ar->arAuthMode       = %d\n", ar->arAuthMode);
 
     if(ar->arPairwiseCrypto != ar->arGroupCrypto) {
         A_PRINTF("Mixed cipher not supported in AP mode\n");
