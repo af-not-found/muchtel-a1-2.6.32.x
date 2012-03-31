@@ -89,7 +89,7 @@ typedef struct batt_param {
 } batt_param_t;
 
 batt_param_t batt_params = {
-	.calcType = {2, 0, 3},   // default=2, min=0, max=3
+	.calcType = {0, 0, 3},   // min=0, default=0, max=3
 };
 
 static ctl_table zeusbatt_table[] = {
@@ -1012,10 +1012,10 @@ static void zeus_battery_refresh_values(struct zeus_battery_update *zbu) {
 	}
 
 #ifdef CONFIG_ZEUSBATT_HACK
-	printk(KERN_DEBUG "sysctl:pm.zeusbatt.calcType=%d\n", batt_params.calcType.val);
-#endif
-
+	printk(KERN_DEBUG "zeus_battery : %d\%, state=%d, calcType=%d\n", percent_now, g_charging_state, batt_params.calcType.val);
+#else
 	printk(KERN_DEBUG "zeus_battery : %d\%, state=%d, EN=%d, 1A=%d, SET=%d\n", percent_now, g_charging_state, gpio_get_value(GPIO_CHR_EN), gpio_get_value(CHR_1A), gpio_get_value(USBSET));
+#endif
 	
     if ((g_charging_state_last != g_charging_state))
 		tca6507_charger_state_report(g_charging_state);
