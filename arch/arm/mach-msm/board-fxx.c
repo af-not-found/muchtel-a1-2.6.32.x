@@ -1524,7 +1524,7 @@ static struct platform_device *devices[] __initdata = {
 
 	&headset_sensor_device, 
 	&msm_device_kgsl,
-	&ALSPS_sensor_device, 
+	&ALSPS_sensor_device,
 	&mtb_platform_device,
 	&hs_device,
 	&msm_batt_device,
@@ -1720,12 +1720,14 @@ static void msm_sdcc_setup_gpio(int dev_id, unsigned int enable)
 #ifdef CONFIG_FIH_FXX
 static int  ar6k_wifi_suspend(int dev_id)
 {
+printk(KERN_ERR "AFNF board-fxx.c ar6k_wifi_suspend\n");
     bluetooth_power(WIFI_CONTROL_MASK | 0);  
     return 1;
 }
 
 static int  ar6k_wifi_resume(int dev_id)
 {
+printk(KERN_ERR "AFNF board-fxx.c ar6k_wifi_resume\n");
     bluetooth_power(WIFI_CONTROL_MASK | 1);    
     return 1;
 }
