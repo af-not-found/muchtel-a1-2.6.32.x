@@ -30,7 +30,7 @@
 #include <mach/msm_iomap.h>
 #include <mach/msm_smd.h>
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
+#ifdef CONFIG_HAS_EARLYSUSPEND__SMB380_DISABLED
 #include <linux/earlysuspend.h>
 
 struct early_suspend stat_early_suspend;
@@ -641,7 +641,7 @@ static int smb380_suspend(struct i2c_client *client, pm_message_t mesg)
 	/* always execute it to recover state error */
 	//if(fihsensor_ctx.bIsIdle == false)
 	{
-#ifndef CONFIG_HAS_EARLYSUSPEND
+#ifndef CONFIG_HAS_EARLYSUSPEND__SMB380_DISABLED
 		if(start_suspend()) {
 			printk(KERN_ERR "fihsensor: start_suspend() fail\n");
 		}
@@ -662,7 +662,7 @@ static int smb380_resume(struct i2c_client *client)
 	/* always execute it to recover state error */
 	if(fihsensor_ctx.activeSlave)
 	{
-#ifndef CONFIG_HAS_EARLYSUSPEND
+#ifndef CONFIG_HAS_EARLYSUSPEND__SMB380_DISABLED
 		if(start_resume()) {
 			printk(KERN_ERR "fihsensor: start_resume() fail\n");
 		}
@@ -673,7 +673,7 @@ static int smb380_resume(struct i2c_client *client)
 
 	return 0;
 }
-#ifdef CONFIG_HAS_EARLYSUSPEND
+#ifdef CONFIG_HAS_EARLYSUSPEND__SMB380_DISABLED
 static void sensor_early_suspend(struct early_suspend *h)
 {
 	printk(KERN_INFO "Begin early suspension of sensors\n");
@@ -731,7 +731,7 @@ static int __init fihsensor_init(void)
 		i2c_del_driver(&ms3c_driver);
 	}
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
+#ifdef CONFIG_HAS_EARLYSUSPEND__SMB380_DISABLED
 	stat_early_suspend.level     = EARLY_SUSPEND_LEVEL_STOP_DRAWING;
 	stat_early_suspend.suspend   = sensor_early_suspend;
 	stat_early_suspend.resume    = sensor_late_resume;
