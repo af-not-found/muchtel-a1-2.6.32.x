@@ -76,5 +76,16 @@ echo "zeusbatt.calcType=2" >> /etc/sysctl.conf
 各モードは以下参照
 http://dl.dropbox.com/u/66501041/zeus_battery_f0x_20130329.png
 
-2012/03/29 #24
+2012/03/31 #24
 /proc/sys/zeusbatt/calcTypeが、0,1,2,3ではなく2,3しか受け付けられない不具合を修正
+
+2012/09/17 #32
+地磁気センサー(fihsensor.c)のearly suspend/resumeをやめた。
+時々deep sleepに失敗するのもこいつが原因な気がする。
+通常のsuspend/resumeはそのままなので、消費電力に大きな影響ないと思われ。
+MSM framebuffer driverにdelay追加。
+www.muchpad.comが落ちているので、復活するまで転載。
+  SUTLR_F0X-327J-0-0002-A01_000.zip（Muchtel A1 2.2.2アップデータ）
+  sha1sum   8f322d6bcd1f05f4cf2f6e392f1aa8fd359bb869
+  size      164,949,644byte
+http://dl.dropbox.com/u/66501041/Muchtel_A1_2.2.2.zip
