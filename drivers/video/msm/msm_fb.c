@@ -420,6 +420,7 @@ static int msm_fb_resume_sub(struct msm_fb_data_type *mfd)
 	mfd->op_enable = mfd->suspend.op_enable;
 
 	if (mfd->suspend.panel_power_on) {
+
 		ret =
 		     msm_fb_blank_sub(FB_BLANK_UNBLANK, mfd->fbi,
 				      mfd->op_enable);
@@ -518,6 +519,8 @@ void msm_fb_set_backlight(struct msm_fb_data_type *mfd, __u32 bkl_lvl, u32 save)
 static int msm_fb_blank_sub(int blank_mode, struct fb_info *info,
 			    boolean op_enable)
 {
+printk(KERN_INFO "AFNF msm_fb_blank_sub 1\n");
+
 	struct msm_fb_data_type *mfd = (struct msm_fb_data_type *)info->par;
 	struct msm_fb_panel_data *pdata = NULL;
 	int ret = 0;
@@ -533,9 +536,15 @@ static int msm_fb_blank_sub(int blank_mode, struct fb_info *info,
 
 	switch (blank_mode) {
 	case FB_BLANK_UNBLANK:
+printk(KERN_INFO "AFNF msm_fb_blank_sub 2 FB_BLANK_UNBLANK\n");
 		if (!mfd->panel_power_on) {
-			msleep(16);
+			//msleep(16);
+mdelay(16);
+printk(KERN_INFO "AFNF before on()\n");
 			ret = pdata->on(mfd->pdev);
+printk(KERN_INFO "AFNF after on(), ret=%d\n", ret);
+mdelay(50);  // 2012/09/17
+
 /* FIH, Charles Huang, 2010/09/16 { */
 /* [FXX_CR], bld build system */
 #ifdef CONFIG_FIH_PROJECT_FM6
@@ -545,6 +554,8 @@ static int msm_fb_blank_sub(int blank_mode, struct fb_info *info,
 			if (ret == 0) {
 				mfd->panel_power_on = TRUE;
 
+printk(KERN_INFO "AFNF msm_fb_blank_sub 3\n");
+mdelay(100);  // 2012/09/17
 				msm_fb_set_backlight(mfd,
 						     mfd->bl_level, 0);
 
@@ -574,7 +585,7 @@ static int msm_fb_blank_sub(int blank_mode, struct fb_info *info,
 			curr_pwr_state = mfd->panel_power_on;
 			mfd->panel_power_on = FALSE;
 
-			msleep(16);
+			msleep(100);
 			ret = pdata->off(mfd->pdev);
 			if (ret)
 				mfd->panel_power_on = curr_pwr_state;
